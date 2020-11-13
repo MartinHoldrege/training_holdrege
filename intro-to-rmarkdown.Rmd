@@ -9,6 +9,10 @@ knitr::opts_chunk$set(echo = FALSE)
 
 Therese has edited Martin's markdown
 
+This line is to merge the branch test and main 
+
+part 2 
+
 ```{r chunk_1}
 library(readr)
 
@@ -53,4 +57,9 @@ plot(bg_chem$P, bg_chem$NO2 + bg_chem$NO3 + bg_chem$NH4)
 We calculated the redfield ratio to be `r round(ratio, 2)`
 
 - plot redfield ratio
+
+Branch test
+```{r}
+a<-3
+```
 
