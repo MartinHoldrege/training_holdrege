@@ -11,6 +11,8 @@ Therese has edited Martin's markdown
 
 This line is to merge the branch test and main 
 
+part 2 
+
 ```{r chunk_1}
 library(readr)
 
