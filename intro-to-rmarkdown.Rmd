@@ -9,7 +9,7 @@ knitr::opts_chunk$set(echo = FALSE)
 
 Therese has edited Martin's markdown
 
-This line is to merge the branche test and main 
+This line is to merge the branch test and main 
 
 ```{r chunk_1}
 library(readr)
