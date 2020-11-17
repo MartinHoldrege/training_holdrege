@@ -13,3 +13,4 @@ knitr::opts_chunk$set(echo = TRUE)
 
 -[session 8 code](session-8.html)
 
+-[Data visualization](dat-vis.html)
