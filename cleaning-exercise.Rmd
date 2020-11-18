@@ -1,0 +1,108 @@
+---
+title: "Cleaning Data Exercise"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message = FALSE}
+library(rvest)
+library(readr)
+library(dplyr)
+library(janitor) # cleanup column names
+library(ggplot2)
+```
+
+## 1. Scrape spp codes
+ 
+```{r}
+webpage <- read_html("https://www.pwrc.usgs.gov/bbl/manual/speclist.cfm")
+
+tbls <- html_nodes(webpage, "table") %>% 
+    html_table(fill = TRUE)
+
+species <- tbls[[1]] %>% 
+    clean_names() %>% # from janitor
+    select(alpha_code, common_name) %>% 
+    mutate(alpha_code = tolower(alpha_code))
+```
+
+## 2. Load CSVs
+
+```{r message = FALSE }
+pred1 <- read_csv("https://arcticdata.io/metacat/d1/mn/v2/object/urn%3Auuid%3A9ffec04c-7e2d-41dd-9e88-b6c2e8c4375e")
+
+nest1 <- read_csv("https://arcticdata.io/metacat/d1/mn/v2/object/urn%3Auuid%3A982bd2fc-4edf-4da7-96ef-0d11b853102d")
+```
+
+## 3. Define functions
+
+```{r}
+
+sp_lookup <- function(df, species) {
+  out <- df %>% 
+    left_join(species, by = c("species" = "alpha_code"))
+  if(any(is.na(out$common_name))) {
+    warning("some NAs present in common name\n")
+  }
+  out
+}
+
+
+```
+
+## 4. Total number of predators by year and spp
+
+```{r}
+pred_yrly <- pred1 %>% 
+  sp_lookup(species = species) %>% 
+  group_by(year, common_name) %>% 
+  summarise(sum_count = sum(count, na.rm = TRUE)) 
+```
+
+```{r}
+
+line_base <- function() {
+  list(geom_point(),
+       geom_line(),
+       theme_classic())
+}
+
+ggplot(pred_yrly, aes(x = year, y = sum_count, color = common_name)) +
+  labs(y = "Total Count") +
+  line_base()
+```
+
+## 5. Calculate total number of eggs predated by year and species.
+
+```{r}
+yrly_nest_pred <- nest1 %>% 
+  sp_lookup(species) %>% 
+  group_by(common_name, year) %>% 
+  summarise(sum_eggs_pred = sum(number_eggs_predated, na.rm = TRUE))
+
+ggplot(yrly_nest_pred, aes(x = year, y = sum_eggs_pred, color = common_name)) +
+  line_base() +
+  labs(y = "Total Number of Eggs Predated")
+```
+
+
+## 6. Calculate total number of predators by year, join to summarized egg predation table, and plot the result.
+
+```{r}
+
+total_pred_yrly <- pred_yrly %>% 
+  group_by(year) %>% 
+  summarise(sum_pred = sum(sum_count)) %>% 
+  left_join(yrly_nest_pred, by = "year") %>% 
+  arrange(common_name, year) %>% 
+  rename(total_predated = sum_eggs_pred,
+         pred_count = sum_pred) %>% 
+  select(common_name, year, total_predated, pred_count)
+
+DT::datatable(total_pred_yrly) 
+```
+
+
